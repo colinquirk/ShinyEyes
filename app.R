@@ -1,5 +1,8 @@
 library(shiny)
 library(tidyverse)
+library(gganimate)
+
+theme_set(theme_minimal())
 
 options(shiny.maxRequestSize=1*1024^3)
 
@@ -27,7 +30,7 @@ ui <- pageWithSidebar(
             });'
         ),
         plotOutput("gaze_gif"),
-        plotOutput("trace_plot")
+        plotOutput("trace_plot", brush = brushOpts(id = "image_brush"))
     )
 )
 
