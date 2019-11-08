@@ -102,8 +102,6 @@ server <- function(input, output, session) {
     
     output$trace_plot = renderPlot({
         p = ggplot()
-
-        print(input$gaze_x)
         
         if(input$x_variable != "" & input$y_variable != "" & input$sample_variable != "") {
             trial_data = lazy_loaded_data() %>% 
