@@ -2,7 +2,7 @@ library(shiny)
 library(tidyverse)
 library(gganimate)
 
-source("keypress_hander.R")
+source("keypress_handler.R")
 
 theme_set(theme_minimal())
 
@@ -184,8 +184,8 @@ server <- function(input, output, session) {
 
         if (input$x_variable != "" & input$y_variable != "" & input$sample_variable != "") {
             p <- ggplot(trial_data(), aes_string(x = input$sample_variable)) +
-                 geom_line(mapping = aes_string(y = input$x_variable), color="red") +
-                 geom_line(mapping = aes_string(y = input$y_variable), color="blue")
+                 geom_line(mapping = aes_string(y = input$x_variable), color = "red") +
+                 geom_line(mapping = aes_string(y = input$y_variable), color = "blue")
         }
 
         if (nrow(brush_data$windows) > 0) {
