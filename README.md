@@ -40,6 +40,6 @@ The output data will have the following columns where each row defines a window:
 
 ## Contributing
 
-If this app is of any use to you, send me a message (cquirk@uchciago.edu; @ColinTQuirk) to let me know so that I know to keep working on this project. I'm also happy to help with any difficulty you have when using this app. If you know much about eyetracking I would also love to hear about your experience, this is a somewhat new technique for me and I'm not sure if anyone even manually codes their data.
+If this app is of any use to you, send me a message (cquirk@uchicago.edu; @ColinTQuirk) to let me know so that I know to keep working on this project. I'm also happy to help with any difficulty you have when using this app. If you know much about eyetracking I would also love to hear about your experience, this is a somewhat new technique for me and I'm not sure if anyone even manually codes their data.
 
 If you find a bug or have a feature request, feel free to open an issue or submit a pull request. 
