@@ -2,6 +2,16 @@
 
 This is a shiny application for manually coding eyetracking data into catagories e.g. fixations, saccades, blinks, etc. Right now, you can name up to (any) three catagories as that's how many I need but if anyone out there has different needs let me know. The goal is to require very little in terms of requirements from the user. The goal is not to create an entire workflow, but is instead to provide a tool for people who know what they are doing. The input is simply a csv file that defines some necessary data and the output is a csv file with all of the windows that you've created.
 
+## Installation
+
+Currently, the only way to use ShinyEyes is to clone this repo or download the source code, then run the code yourself. I would like to change this one day, either by making this app a standalone website or by creating executables that can be run without having to have R installed separately. For now, you will need `R` (and optionally RStudio), and the following packages installed:
+
+- `shiny`
+- `tidyverse`
+- `gganimate`
+- `gifski`
+- `png`
+
 ## Input data
 
 Shiny eyes requires a csv with columns that define the following information:
@@ -20,6 +30,7 @@ In addition to providing a csv file using the "Data File" file selector with the
 - Window name 3 - What do you want to name your third window (associated with the keypress "3"). "Blink" by default.
 
 You must also provide some reasonable scale if you are going to be looking at the gaze gifs:
+
 - Gaze Gif X Scale Min - The minimum value on the X scale
 - Gaze Gif X Scale Max - The maximum value on the X scale
 - Gaze Gif Y Scale Min - The minimum value on the Y scale
