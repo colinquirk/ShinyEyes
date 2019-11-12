@@ -210,7 +210,8 @@ server <- function(input, output, session) {
             p <- p + geom_rect(data = brush_data$windows,
                                aes(x = NULL, xmin = xmin, xmax = xmax, fill = window_name),
                                ymin = -Inf, ymax = Inf, alpha = 0.3) +
-                     scale_fill_manual(values = colors)
+                     scale_fill_manual(values = colors) +
+                     theme(legend.position="bottom")
         }
         p
     })
