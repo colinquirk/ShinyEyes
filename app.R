@@ -34,7 +34,7 @@ ui <- pageWithSidebar(
 
     mainPanel(
         tags$script(keypress_handler),
-        textOutput("trial_name"),
+        textOutput("chunk_name"),
         actionButton("prev_chunk", "Prev Chunk"),
         actionButton("undo_brush", "Undo Window"),
         actionButton("clear_brush", "Clear Windows"),
@@ -67,14 +67,14 @@ server <- function(input, output, session) {
         }
     })
 
-    lazy_trials <- reactive({
+    lazy_chunks <- reactive({
         data <- lazy_loaded_data()
         if (!is.null(data) & !is.null(input$grouping_variables)) {
-            trials <- distinct_at(data, vars(input$grouping_variables))
+            chunks <- distinct_at(data, vars(input$grouping_variables))
         } else {
-            trials <- NULL
+            chunks <- NULL
         }
-        trials
+        chunks
     })
 
     stored_data <- reactiveValues(data = NULL)
@@ -82,22 +82,22 @@ server <- function(input, output, session) {
     row_num_vect <- reactiveValues(row_num = 1)
 
     observeEvent(input$next_chunk, {
-        trials <- lazy_trials()
+        chunks <- lazy_chunks()
         
-        single_trial_windows <- get_single_trial_windows(trials,
+        single_chunk_windows <- get_single_chunk_windows(chunks,
                                                          row_num_vect$row_num,
                                                          brush_data$windows)
 
-        stored_data$data <- update_stored_data(stored_data$data, single_trial_windows)
+        stored_data$data <- update_stored_data(stored_data$data, single_chunk_windows)
 
         row_num_vect$row_num <- row_num_vect$row_num + 1
         
-        if (row_num_vect$row_num > nrow(trials)) {
+        if (row_num_vect$row_num > nrow(chunks)) {
             row_num_vect$row_num <- 1
         }
 
         if (!is.null(stored_data$data)) {
-            stored_data$data <- clear_saved_window_data(trials,
+            stored_data$data <- clear_saved_window_data(chunks,
                                                         row_num_vect$row_num,
                                                         stored_data$data)
         }
@@ -106,21 +106,21 @@ server <- function(input, output, session) {
     })
 
     observeEvent(input$prev_chunk, {
-        trials <- lazy_trials()
+        chunks <- lazy_chunks()
         
-        single_trial_windows <- get_single_trial_windows(trials,
+        single_chunk_windows <- get_single_chunk_windows(chunks,
                                                          row_num_vect$row_num,
                                                          brush_data$windows)
 
-        stored_data$data <- update_stored_data(stored_data$data, single_trial_windows)
+        stored_data$data <- update_stored_data(stored_data$data, single_chunk_windows)
 
         row_num_vect$row_num <- row_num_vect$row_num - 1
         if (row_num_vect$row_num < 1) {
-            row_num_vect$row_num <- nrow(trials)
+            row_num_vect$row_num <- nrow(chunks)
         }
 
         if (!is.null(stored_data$data)) {
-            stored_data$data <- clear_saved_window_data(trials,
+            stored_data$data <- clear_saved_window_data(chunks,
                                                         row_num_vect$row_num,
                                                         stored_data$data)
         }
@@ -130,29 +130,29 @@ server <- function(input, output, session) {
 
     output$download_data <- downloadHandler(filename = "shiny_eyes_output.csv",
                                             content = function(file) {
-                                                trials <- lazy_trials()
+                                                chunks <- lazy_chunks()
 
-                                                single_trial_windows <- get_single_trial_windows(trials,
+                                                single_chunk_windows <- get_single_chunk_windows(chunks,
                                                                                                  row_num_vect$row_num,
                                                                                                  brush_data$windows)
 
-                                                stored_data$data <- update_stored_data(stored_data$data, single_trial_windows)
+                                                stored_data$data <- update_stored_data(stored_data$data, single_chunk_windows)
                                                 write_csv(stored_data$data, file)},
                                             contentType = "text/csv")
 
-    trial_data <- reactive({
-        trials <- lazy_trials()
+    chunk_data <- reactive({
+        chunks <- lazy_chunks()
         
-        if (!is.null(trials)) {
-            trials %>%
+        if (!is.null(chunks)) {
+            chunks %>%
                 slice(row_num_vect$row_num) %>%
                 left_join(lazy_loaded_data())
         } else {
             NULL
         }})
 
-    output$trial_name <- renderText({
-        get_chunk_title(lazy_trials(), row_num_vect$row_num)
+    output$chunk_name <- renderText({
+        get_chunk_title(lazy_chunks(), row_num_vect$row_num)
     })
 
     brush_data <- reactiveValues(windows = empty_window_data)
@@ -191,7 +191,7 @@ server <- function(input, output, session) {
         p <- ggplot()
 
         if (input$x_variable != "" & input$y_variable != "" & input$sample_variable != "") {
-            p <- ggplot(trial_data(), aes_string(x = input$sample_variable)) +
+            p <- ggplot(chunk_data(), aes_string(x = input$sample_variable)) +
                  geom_line(aes_string(y = input$x_variable), color = "red") +
                  geom_line(aes_string(y = input$y_variable), color = "blue")
         }
@@ -221,7 +221,7 @@ server <- function(input, output, session) {
             gaze_y_scale_max <- as.numeric(input$gaze_y_scale_max)
             n_frames <- as.numeric(input$n_frames)
 
-            p <- ggplot(trial_data(), aes_string(x = input$x_variable, y = input$y_variable)) +
+            p <- ggplot(chunk_data(), aes_string(x = input$x_variable, y = input$y_variable)) +
                  annotate(geom = "text", label = "+",
                           x = gaze_x_scale_max/2,
                           y = gaze_y_scale_max/2, size = 15) +
