@@ -13,10 +13,15 @@ update_stored_data <- function(stored_data, single_chunk_windows) {
 }
 
 clear_saved_window_data <- function(chunks, index, stored_data) {
-  chunk_info <- chunks %>%
-    slice(index)
-  
-  anti_join(stored_data, chunk_info)
+  if (is.null(stored_data)) {
+    data = NULL
+  } else {
+    chunk_info <- chunks %>%
+      slice(index)
+
+    data = anti_join(stored_data, chunk_info)
+  }
+  data
 }
 
 get_chunk_title <- function(chunks, index) {
