@@ -5,9 +5,11 @@ get_single_chunk_windows <- function(chunks, index, brush_data) {
 }
 
 update_stored_data <- function(stored_data, single_chunk_windows) {
-  rbind(stored_data,
-        single_chunk_windows,
-        stringsAsFactors = FALSE)
+  data <- rbind(stored_data,
+                single_chunk_windows,
+                stringsAsFactors = FALSE)
+
+  distinct(data)
 }
 
 clear_saved_window_data <- function(chunks, index, stored_data) {

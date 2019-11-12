@@ -137,6 +137,10 @@ server <- function(input, output, session) {
                                                                                                  brush_data$windows)
 
                                                 stored_data$data <- update_stored_data(stored_data$data, single_chunk_windows)
+
+                                                stored_data$data <- stored_data$data %>%
+                                                    arrange(!!!syms(input$grouping_variables), xmin, xmax)
+
                                                 write_csv(stored_data$data, file)},
                                             contentType = "text/csv")
 
@@ -165,6 +169,10 @@ server <- function(input, output, session) {
 
     observeEvent(input$clear_brush, {
         brush_data$windows <- empty_window_data
+
+        stored_data$data <- clear_saved_window_data(lazy_chunks(),
+                                                    row_num_vect$row_num,
+                                                    stored_data$data)
     })
 
     observeEvent(input$keypress, {
