@@ -88,9 +88,7 @@ server <- function(input, output, session) {
                                                          row_num_vect$row_num,
                                                          brush_data$windows)
 
-        stored_data$data <- rbind(stored_data$data,
-                                 single_trial_windows,
-                                 stringsAsFactors = FALSE)
+        stored_data$data <- update_stored_data(stored_data$data, single_trial_windows)
 
         row_num_vect$row_num <- row_num_vect$row_num + 1
         
@@ -114,9 +112,7 @@ server <- function(input, output, session) {
                                                          row_num_vect$row_num,
                                                          brush_data$windows)
 
-        stored_data$data <- rbind(stored_data$data,
-                                  single_trial_windows,
-                                  stringsAsFactors = FALSE)
+        stored_data$data <- update_stored_data(stored_data$data, single_trial_windows)
 
         row_num_vect$row_num <- row_num_vect$row_num - 1
         if (row_num_vect$row_num < 1) {
@@ -133,7 +129,15 @@ server <- function(input, output, session) {
     })
 
     output$download_data <- downloadHandler(filename = "shiny_eyes_output.csv",
-                                            content = function(file) {write_csv(stored_data$data, file)},
+                                            content = function(file) {
+                                                trials <- lazy_trials()
+
+                                                single_trial_windows <- get_single_trial_windows(trials,
+                                                                                                 row_num_vect$row_num,
+                                                                                                 brush_data$windows)
+
+                                                stored_data$data <- update_stored_data(stored_data$data, single_trial_windows)
+                                                write_csv(stored_data$data, file)},
                                             contentType = "text/csv")
 
     trial_data <- reactive({
