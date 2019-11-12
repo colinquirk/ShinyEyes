@@ -24,6 +24,11 @@ ui <- pageWithSidebar(
         textInput("window_1_name", "Window 1 Name", value = "Fixation"),
         textInput("window_2_name", "Window 2 Name", value = "Saccade"),
         textInput("window_3_name", "Window 3 Name", value = "Blink"),
+        textInput("gaze_x_scale_min", "Gaze Gif X Scale Min", value = "0"),
+        textInput("gaze_x_scale_max", "Gaze Gif X Scale Max", value = "1920"),
+        textInput("gaze_y_scale_min", "Gaze Gif Y Scale Min", value = "0"),
+        textInput("gaze_y_scale_max", "Gaze Gif Y Scale Max", value = "1080"),
+        textInput("n_frames", "Gaze Gif nFrames", value = "18"),
         downloadButton("download_data", "Download Data")
     ),
 
@@ -206,16 +211,26 @@ server <- function(input, output, session) {
 
     output$gaze_gif <- renderImage({
         if (gaze_gif_data$render_gif) {
+            gaze_x_scale_min <- as.numeric(input$gaze_x_scale_min)
+            gaze_x_scale_max <- as.numeric(input$gaze_x_scale_max)
+            gaze_y_scale_min <- as.numeric(input$gaze_y_scale_min)
+            gaze_y_scale_max <- as.numeric(input$gaze_y_scale_max)
+            n_frames <- as.numeric(input$n_frames)
+
             p <- ggplot(trial_data(), aes_string(x = input$x_variable, y = input$y_variable)) +
-                 annotate(geom = "text", label = "+", x = 960, y = 540, size = 15) +
+                 annotate(geom = "text", label = "+",
+                          x = gaze_x_scale_max/2,
+                          y = gaze_y_scale_max/2, size = 15) +
                  geom_point() +
-                 coord_equal(xlim = c(560, 1360), ylim = c(240, 840)) +
+                 coord_equal(xlim = c(gaze_x_scale_min, gaze_x_scale_max),
+                             ylim = c(gaze_y_scale_min, gaze_y_scale_max),
+                             expand = FALSE) +
                  transition_time(!!sym(input$sample_variable)) +
                  labs(title = "Sample: {round(frame_time)}",
                       x = "",
                       y = "")
 
-            anim_save("outfile.gif", animate(p, nframes = 18))
+            anim_save("outfile.gif", animate(p, nframes = n_frames))
             list(src = "outfile.gif", contentType = "image/gif")
         } else {
             ggsave("outfile.png", ggplot(), width = 1, height = 1, units = "in")

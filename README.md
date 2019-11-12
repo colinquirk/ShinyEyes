@@ -19,6 +19,14 @@ In addition to providing a csv file using the "Data File" file selector with the
 - Window name 2 - What do you want to name your second window (associated with the keypress "2"). "Saccade" by default.
 - Window name 3 - What do you want to name your third window (associated with the keypress "3"). "Blink" by default.
 
+You must also provide some reasonable scale if you are going to be looking at the gaze gifs:
+- Gaze Gif X Scale Min - The minimum value on the X scale
+- Gaze Gif X Scale Max - The maximum value on the X scale
+- Gaze Gif Y Scale Min - The minimum value on the Y scale
+- Gaze Gif Y Scale Max - The maximum value on the Y scale
+
+By default, the settings are defined for a standard 1080p screen.
+
 When all of the necessary information has been provided, you will see a trace plot rendered along with the chunk information (for the test data, this would be subject and trial information). Make sure that each chunk only makes up a single piece of recorded data. The trace plots will not look correct if, for example, you did not include a subject column as a grouping variable despite having multiple subjects in your file. This trace plot can be interacted with by clicking and dragging to create a "window." To "lock in" a window, *you must press the "1", "2", or "3" key.* Your window will now be rendered on the actual plot (this is how you will know it is being stored). The sample information associated with the window will then be saved behind the scenes.
 
 The `Undo Window` and `Clear Windows` buttons have similar functions. `Undo Window` will remove a single (saved) window and `Clear Windows` will remove all the windows saved for that chunk. These buttons will not effect any of the other chunks.
