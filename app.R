@@ -3,6 +3,7 @@ library(tidyverse)
 library(gganimate)
 
 source("keypress_handler.R")
+source("helpers.R")
 
 theme_set(theme_minimal())
 
@@ -40,7 +41,6 @@ ui <- pageWithSidebar(
     )
 )
 
-
 server <- function(input, output, session) {
     lazy_loaded_data <- reactive({
         if (!is.null(input$input_filepath$datapath)) {
@@ -52,17 +52,14 @@ server <- function(input, output, session) {
     })
 
     observe({
-        try({
-            if (!is.null(input$input_filepath)) {
-                # Empty string tops list, so events only fire when values are actively changed by the user
-                column_names <- c("", colnames(lazy_loaded_data()))
-                updateSelectInput(session, "grouping_variables", choices = column_names)
-                updateSelectInput(session, "sample_variable", choices = column_names)
-                updateSelectInput(session, "x_variable", choices = column_names)
-                updateSelectInput(session, "y_variable", choices = column_names)
-            }
-        })
-
+        if (!is.null(input$input_filepath)) {
+            # Empty string tops list, so events only fire when values are actively changed by the user
+            column_names <- c("", colnames(lazy_loaded_data()))
+            updateSelectInput(session, "grouping_variables", choices = column_names)
+            updateSelectInput(session, "sample_variable", choices = column_names)
+            updateSelectInput(session, "x_variable", choices = column_names)
+            updateSelectInput(session, "y_variable", choices = column_names)
+        }
     })
 
     lazy_trials <- reactive({
@@ -80,51 +77,54 @@ server <- function(input, output, session) {
     row_num_vect <- reactiveValues(row_num = 1)
 
     observeEvent(input$next_chunk, {
-        single_trial_windows <- lazy_trials() %>%
-            slice(row_num_vect$row_num) %>%
-            merge(brush_data$windows)
+        trials <- lazy_trials()
+        
+        single_trial_windows <- get_single_trial_windows(trials,
+                                                         row_num_vect$row_num,
+                                                         brush_data$windows)
 
         stored_data$data <- rbind(stored_data$data,
                                  single_trial_windows,
                                  stringsAsFactors = FALSE)
 
         row_num_vect$row_num <- row_num_vect$row_num + 1
-        if (row_num_vect$row_num > nrow(lazy_trials())) {
+        
+        if (row_num_vect$row_num > nrow(trials)) {
             row_num_vect$row_num <- 1
         }
 
         if (!is.null(stored_data$data)) {
-            trial_info <- lazy_trials() %>%
-                slice(row_num_vect$row_num)
-
-            stored_data$data <- anti_join(stored_data$data, trial_info)
+            stored_data$data <- clear_saved_window_data(trials,
+                                                        row_num_vect$row_num,
+                                                        stored_data$data)
         }
 
-        brush_data$windows <- tibble(xmin = numeric(0), xmax = numeric(0), window_name = character(0))
+        brush_data$windows <- empty_window_data
     })
 
     observeEvent(input$prev_chunk, {
-        single_trial_windows <- lazy_trials() %>%
-            slice(row_num_vect$row_num) %>%
-            merge(brush_data$windows)
+        trials <- lazy_trials()
+        
+        single_trial_windows <- get_single_trial_windows(trials,
+                                                         row_num_vect$row_num,
+                                                         brush_data$windows)
 
         stored_data$data <- rbind(stored_data$data,
-                                 single_trial_windows,
-                                 stringsAsFactors = FALSE)
+                                  single_trial_windows,
+                                  stringsAsFactors = FALSE)
 
         row_num_vect$row_num <- row_num_vect$row_num - 1
         if (row_num_vect$row_num < 1) {
-            row_num_vect$row_num <- nrow(lazy_trials())
+            row_num_vect$row_num <- nrow(trials)
         }
 
         if (!is.null(stored_data$data)) {
-            trial_info <- lazy_trials() %>%
-                slice(row_num_vect$row_num)
-
-            stored_data$data <- anti_join(stored_data$data, trial_info)
+            stored_data$data <- clear_saved_window_data(trials,
+                                                        row_num_vect$row_num,
+                                                        stored_data$data)
         }
 
-        brush_data$windows <- tibble(xmin = numeric(0), xmax = numeric(0), window_name = character(0))
+        brush_data$windows <- empty_window_data
     })
 
     output$download_data <- downloadHandler(filename = "shiny_eyes_output.csv",
@@ -132,8 +132,10 @@ server <- function(input, output, session) {
                                             contentType = "text/csv")
 
     trial_data <- reactive({
-        if (!is.null(lazy_trials())) {
-            lazy_trials() %>%
+        trials <- lazy_trials()
+        
+        if (!is.null(trials)) {
+            trials %>%
                 slice(row_num_vect$row_num) %>%
                 left_join(lazy_loaded_data())
         } else {
@@ -141,26 +143,19 @@ server <- function(input, output, session) {
         }})
 
     output$trial_name <- renderText({
-        str <- ""
-
-        if (!is.null(lazy_trials())) {
-           for (name in colnames(lazy_trials())) {
-               str <- paste0(str, name, ":", lazy_trials()[[row_num_vect$row_num, name]], " ")
-           }
-        }
-        str
+        get_chunk_title(lazy_trials(), row_num_vect$row_num)
     })
 
-    brush_data <- reactiveValues(windows = tibble(xmin = numeric(0), xmax = numeric(0), window_name = character(0)))
+    brush_data <- reactiveValues(windows = empty_window_data)
 
     observeEvent(input$undo_brush, {
         if (nrow(brush_data$windows) > 0) {
-            brush_data$windows <- head(brush_data$windows, -1)
+            brush_data$windows <- head(brush_data$windows, -1)  # Remove last window
         }
     })
 
     observeEvent(input$clear_brush, {
-        brush_data$windows <- tibble(xmin = numeric(0), xmax = numeric(0), window_name = character(0))
+        brush_data$windows <- empty_window_data
     })
 
     observeEvent(input$keypress, {
@@ -171,11 +166,15 @@ server <- function(input, output, session) {
                                  "3" = input$window_3_name)
 
             brush_data$windows <- rbind(brush_data$windows,
-                                       list(xmin = input$image_brush$xmin, xmax = input$image_brush$xmax, window_name = window_name),
-                                       stringsAsFactors = FALSE)
+                                        list(xmin = input$image_brush$xmin,
+                                             xmax = input$image_brush$xmax,
+                                             window_name = window_name),
+                                        stringsAsFactors = FALSE)
 
             brush_data$windows$window_name <- factor(brush_data$windows$window_name,
-                                                    levels = c(input$window_1_name, input$window_2_name, input$window_3_name))
+                                                     levels = c(input$window_1_name,
+                                                                input$window_2_name,
+                                                                input$window_3_name))
         }
     })
 
@@ -184,15 +183,15 @@ server <- function(input, output, session) {
 
         if (input$x_variable != "" & input$y_variable != "" & input$sample_variable != "") {
             p <- ggplot(trial_data(), aes_string(x = input$sample_variable)) +
-                 geom_line(mapping = aes_string(y = input$x_variable), color = "red") +
-                 geom_line(mapping = aes_string(y = input$y_variable), color = "blue")
+                 geom_line(aes_string(y = input$x_variable), color = "red") +
+                 geom_line(aes_string(y = input$y_variable), color = "blue")
         }
 
         if (nrow(brush_data$windows) > 0) {
             names(colors) <- c(input$window_1_name, input$window_2_name, input$window_3_name)
 
             p <- p + geom_rect(data = brush_data$windows,
-                               mapping = aes(x = NULL, xmin = xmin, xmax = xmax, fill = window_name),
+                               aes(x = NULL, xmin = xmin, xmax = xmax, fill = window_name),
                                ymin = -Inf, ymax = Inf, alpha = 0.3) +
                      scale_fill_manual(values = colors)
         }
@@ -208,13 +207,13 @@ server <- function(input, output, session) {
     output$gaze_gif <- renderImage({
         if (gaze_gif_data$render_gif) {
             p <- ggplot(trial_data(), aes_string(x = input$x_variable, y = input$y_variable)) +
-                annotate(geom = "text", label = "+", x = 960, y = 540, size = 15) +
-                geom_point() +
-                coord_equal(xlim = c(560, 1360), ylim = c(240, 840)) +
-                transition_time(!!sym(input$sample_variable)) +
-                labs(title = "Sample: {round(frame_time)}",
-                     x = "",
-                     y = "")
+                 annotate(geom = "text", label = "+", x = 960, y = 540, size = 15) +
+                 geom_point() +
+                 coord_equal(xlim = c(560, 1360), ylim = c(240, 840)) +
+                 transition_time(!!sym(input$sample_variable)) +
+                 labs(title = "Sample: {round(frame_time)}",
+                      x = "",
+                      y = "")
 
             anim_save("outfile.gif", animate(p, nframes = 18))
             list(src = "outfile.gif", contentType = "image/gif")
@@ -226,4 +225,3 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
-
