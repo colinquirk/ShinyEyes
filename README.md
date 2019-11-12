@@ -38,7 +38,7 @@ You must also provide some reasonable scale if you are going to be looking at th
 - Gaze Gif Y Scale Min - The minimum value on the Y scale
 - Gaze Gif Y Scale Max - The maximum value on the Y scale
 
-By default, the settings are defined for a standard 1080p screen.
+By default, the settings are defined for a standard 1080p screen. You also need to provide a number of frames for your gif. 18 gives a reasonable amount of resolution without making the rendering take forever, but if your data has a different number of samples or if you would like to see more detail you may want to change this to be higher or lower.
 
 When all of the necessary information has been provided, you will see a trace plot rendered along with the chunk information (for the test data, this would be subject and trial information). Make sure that each chunk only makes up a single piece of recorded data. The trace plots will not look correct if, for example, you did not include a subject column as a grouping variable despite having multiple subjects in your file. This trace plot can be interacted with by clicking and dragging to create a "window." To "lock in" a window, *you must press the "1", "2", or "3" key.* Your window will now be rendered on the actual plot (this is how you will know it is being stored). The sample information associated with the window will then be saved behind the scenes.
 
