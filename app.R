@@ -18,6 +18,8 @@ ui <- pageWithSidebar(
     sidebarPanel(
         fileInput("input_filepath", "Data File",
                   accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+        fileInput("existing_codes", "Existing Codes",
+                  accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
         selectInput("grouping_variables", "Grouping Variables", NULL, multiple = TRUE),
         selectInput("sample_variable", "Sample Variable", NULL, multiple = FALSE),
         selectInput("x_variable", "Gaze X Variable", NULL, multiple = FALSE),
@@ -56,6 +58,15 @@ server <- function(input, output, session) {
         }
         data
     })
+    
+    lazy_loaded_codes <- reactive({
+        if (!is.null(input$existing_codes$datapath)) {
+            data <- read_csv(input$existing_codes$datapath)
+        } else {
+            data <- NULL
+        }
+        data
+    })
 
     observe({
         if (!is.null(input$input_filepath)) {
@@ -81,6 +92,15 @@ server <- function(input, output, session) {
     stored_data <- reactiveValues(data = NULL)
 
     row_num_vect <- reactiveValues(row_num = 1)
+    
+    cur_chunk <- reactive({
+      if (!is.null(lazy_chunks())) {
+        lazy_chunks() %>%
+          slice(row_num_vect$row_num)
+      } else {
+        NULL
+      }
+    })
 
     observeEvent(input$next_chunk, {
         chunks <- lazy_chunks()
@@ -149,9 +169,8 @@ server <- function(input, output, session) {
         chunks <- lazy_chunks()
         
         if (!is.null(chunks)) {
-            chunks %>%
-                slice(row_num_vect$row_num) %>%
-                left_join(lazy_loaded_data())
+          cur_chunk() %>% 
+            left_join(lazy_loaded_data())
         } else {
             NULL
         }})
@@ -161,6 +180,23 @@ server <- function(input, output, session) {
     })
 
     brush_data <- reactiveValues(windows = empty_window_data)
+    
+    chunk_codes <- reactive({
+      if (!is.null(cur_chunk()) & !is.null(lazy_loaded_codes()) & input$sample_variable != "" & input$x_variable  != "" & input$y_variable  != "") {
+        cur_chunk() %>% 
+          left_join(lazy_loaded_codes())
+      } else {
+        NULL
+      }
+    })
+    
+    observeEvent(chunk_codes(), {
+      if (is.null(chunk_codes())) {
+        brush_data$windows <- empty_window_data
+      } else {
+        brush_data$windows <- chunk_codes()
+      }
+    })
 
     observeEvent(input$undo_brush, {
         if (nrow(brush_data$windows) > 0) {
