@@ -42,7 +42,7 @@ ui <- pageWithSidebar(
         actionButton("undo_brush", "Undo Window"),
         actionButton("clear_brush", "Clear Windows"),
         actionButton("next_chunk", "Next Chunk"),
-        plotOutput("trace_plot", brush = brushOpts(id = "image_brush", direction = "x")),
+        plotOutput("trace_plot", brush = brushOpts(id = "image_brush", direction = "x"), hover = "trace_hover"),
         actionButton("render_gif_button", "Render Gaze Gif"),
         actionButton("hide_gif_button", "Hide Gaze Gif"),
         plotOutput("gaze_gif")
@@ -213,7 +213,7 @@ server <- function(input, output, session) {
     })
 
     observeEvent(input$keypress, {
-        if (input$keypress != 0) {
+        if (input$keypress %in% c("1", "2", "3")) {
             window_name <- switch(input$keypress,
                                  "1" = input$window_1_name,
                                  "2" = input$window_2_name,
@@ -229,6 +229,13 @@ server <- function(input, output, session) {
                                                      levels = c(input$window_1_name,
                                                                 input$window_2_name,
                                                                 input$window_3_name))
+        } else if (input$keypress == "d") {
+          delete_x <- input$trace_hover$x
+          
+          if (!is.null(delete_x) & !is.null(brush_data$windows)) {
+            brush_data$windows <- brush_data$windows %>% 
+              filter(!(xmin <= delete_x & xmax >= delete_x)) 
+          }
         }
     })
 
