@@ -44,6 +44,8 @@ When all of the necessary information has been provided, you will see a trace pl
 
 The `Undo Window` and `Clear Windows` buttons have similar functions. `Undo Window` will remove a single (saved) window and `Clear Windows` will remove all the windows saved for that chunk. These buttons will not effect any of the other chunks.
 
+You can also delete a single window with the "d" key. The window your cursor is hovering over will be deleted. This is especially usefully when working with windows that have been imported in from an outside source.
+
 The `previous chunk` and `next chunk` buttons will move you to the next (or previous) unique chunk in your data. Any windows from the last chunk are finilalized and stored. *If you return to a previous chunk, any old stored windows will be cleared.* This is currently the only way of going back and clearing window data that has already been stored.
 
 If you would like to view the gaze data in gif format, you can click the `Render Gaze Gif` function. This function uses the `gganimate` package which requires you to install the `gifski` and `png` packages (gganimate will not install them for you). I recommend clicking the `Hide Gaze Gif` button whenever you are not using this function as it will take a few seconds to render for each chunk, and therefore can be quite slow.
@@ -58,6 +60,12 @@ The output data will have the following columns where each row defines a window:
 - xmin - the leftmost bound of the window in `sample variable` units
 - xmax - the rightmost bound of the window in `sample variable` units
 - window_name - Your defined name for the window, e.g. "Fixation"
+
+## Importing Existing Codes
+
+It can be time consuming to manually code all of your data from scratch if you have a large number of chunks to examine. To speed up this process, data can be preprocessed using whatever your preferred automatic system is and then imported into ShinyEyes. ShinyEyes expects the windows to be defined in the same way they are output. This means you can easily look at data you have previously coded with ShinyEyes, but data from other systems may require a decent amount of preprocessing.
+
+To use this feature, import your data as described above. Then, import your codes using the "Import Existing Codes" field. This should be a link to a csv containing your grouping variables, an `xmin` column, an `xmax` column, and a `window_name` column.
 
 ## Contributing
 
