@@ -18,6 +18,8 @@ ui <- pageWithSidebar(
     sidebarPanel(
         fileInput("input_filepath", "Data File",
                   accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+        fileInput("existing_codes", "Import Existing Codes",
+                  accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
         selectInput("grouping_variables", "Grouping Variables", NULL, multiple = TRUE),
         selectInput("sample_variable", "Sample Variable", NULL, multiple = FALSE),
         selectInput("x_variable", "Gaze X Variable", NULL, multiple = FALSE),
@@ -40,7 +42,7 @@ ui <- pageWithSidebar(
         actionButton("undo_brush", "Undo Window"),
         actionButton("clear_brush", "Clear Windows"),
         actionButton("next_chunk", "Next Chunk"),
-        plotOutput("trace_plot", brush = brushOpts(id = "image_brush", direction = "x")),
+        plotOutput("trace_plot", brush = brushOpts(id = "image_brush", direction = "x"), hover = "trace_hover"),
         actionButton("render_gif_button", "Render Gaze Gif"),
         actionButton("hide_gif_button", "Hide Gaze Gif"),
         plotOutput("gaze_gif")
@@ -51,6 +53,15 @@ server <- function(input, output, session) {
     lazy_loaded_data <- reactive({
         if (!is.null(input$input_filepath$datapath)) {
             data <- read_csv(input$input_filepath$datapath)
+        } else {
+            data <- NULL
+        }
+        data
+    })
+    
+    lazy_loaded_codes <- reactive({
+        if (!is.null(input$existing_codes$datapath)) {
+            data <- read_csv(input$existing_codes$datapath)
         } else {
             data <- NULL
         }
@@ -81,6 +92,15 @@ server <- function(input, output, session) {
     stored_data <- reactiveValues(data = NULL)
 
     row_num_vect <- reactiveValues(row_num = 1)
+    
+    cur_chunk <- reactive({
+      if (!is.null(lazy_chunks())) {
+        lazy_chunks() %>%
+          slice(row_num_vect$row_num)
+      } else {
+        NULL
+      }
+    })
 
     observeEvent(input$next_chunk, {
         chunks <- lazy_chunks()
@@ -149,9 +169,8 @@ server <- function(input, output, session) {
         chunks <- lazy_chunks()
         
         if (!is.null(chunks)) {
-            chunks %>%
-                slice(row_num_vect$row_num) %>%
-                left_join(lazy_loaded_data())
+          cur_chunk() %>% 
+            left_join(lazy_loaded_data())
         } else {
             NULL
         }})
@@ -161,6 +180,24 @@ server <- function(input, output, session) {
     })
 
     brush_data <- reactiveValues(windows = empty_window_data)
+    
+    chunk_codes <- reactive({
+      if (!is.null(cur_chunk()) & !is.null(lazy_loaded_codes()) & input$sample_variable != "" & input$x_variable  != "" & input$y_variable  != "") {
+        cur_chunk() %>% 
+          left_join(lazy_loaded_codes()) %>% 
+          select(xmin, xmax, window_name)
+      } else {
+        NULL
+      }
+    })
+    
+    observeEvent(chunk_codes(), {
+      if (is.null(chunk_codes())) {
+        brush_data$windows <- empty_window_data
+      } else {
+        brush_data$windows <- chunk_codes()
+      }
+    })
 
     observeEvent(input$undo_brush, {
         if (nrow(brush_data$windows) > 0) {
@@ -177,7 +214,7 @@ server <- function(input, output, session) {
     })
 
     observeEvent(input$keypress, {
-        if (input$keypress != 0) {
+        if (input$keypress %in% c("1", "2", "3")) {
             window_name <- switch(input$keypress,
                                  "1" = input$window_1_name,
                                  "2" = input$window_2_name,
@@ -193,6 +230,13 @@ server <- function(input, output, session) {
                                                      levels = c(input$window_1_name,
                                                                 input$window_2_name,
                                                                 input$window_3_name))
+        } else if (input$keypress == "d") {
+          delete_x <- input$trace_hover$x
+          
+          if (!is.null(delete_x) & !is.null(brush_data$windows)) {
+            brush_data$windows <- brush_data$windows %>% 
+              filter(!(xmin <= delete_x & xmax >= delete_x))
+          }
         }
     })
 
