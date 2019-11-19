@@ -184,7 +184,8 @@ server <- function(input, output, session) {
     chunk_codes <- reactive({
       if (!is.null(cur_chunk()) & !is.null(lazy_loaded_codes()) & input$sample_variable != "" & input$x_variable  != "" & input$y_variable  != "") {
         cur_chunk() %>% 
-          left_join(lazy_loaded_codes())
+          left_join(lazy_loaded_codes()) %>% 
+          select(xmin, xmax, window_name)
       } else {
         NULL
       }
@@ -234,7 +235,7 @@ server <- function(input, output, session) {
           
           if (!is.null(delete_x) & !is.null(brush_data$windows)) {
             brush_data$windows <- brush_data$windows %>% 
-              filter(!(xmin <= delete_x & xmax >= delete_x)) 
+              filter(!(xmin <= delete_x & xmax >= delete_x))
           }
         }
     })
