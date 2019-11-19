@@ -18,7 +18,7 @@ ui <- pageWithSidebar(
     sidebarPanel(
         fileInput("input_filepath", "Data File",
                   accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
-        fileInput("existing_codes", "Existing Codes",
+        fileInput("existing_codes", "Import Existing Codes",
                   accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
         selectInput("grouping_variables", "Grouping Variables", NULL, multiple = TRUE),
         selectInput("sample_variable", "Sample Variable", NULL, multiple = FALSE),
