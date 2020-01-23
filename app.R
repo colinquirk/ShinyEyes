@@ -34,6 +34,7 @@ ui <- pageWithSidebar(
         textInput("gaze_y_scale_min", "Gaze Gif Y Scale Min", value = "0"),
         textInput("gaze_y_scale_max", "Gaze Gif Y Scale Max", value = "1080"),
         textInput("n_frames", "Gaze Gif nFrames", value = "18"),
+        textInput("percent_skip", "Percent to skip (0-100)", value = 5),
         downloadButton("download_data", "Download Data")
     ),
 
@@ -44,6 +45,7 @@ ui <- pageWithSidebar(
         actionButton("undo_brush", "Undo Window"),
         actionButton("clear_brush", "Clear Windows"),
         actionButton("next_chunk", "Next Chunk"),
+        actionButton("skip", "Skip Ahead"),
         plotOutput("trace_plot", brush = brushOpts(id = "image_brush", direction = "x"), hover = "trace_hover"),
         actionButton("render_gif_button", "Render Gaze Gif"),
         actionButton("hide_gif_button", "Hide Gaze Gif"),
@@ -149,6 +151,32 @@ server <- function(input, output, session) {
         }
 
         brush_data$windows <- empty_window_data
+    })
+    
+    observeEvent(input$skip, {
+      chunks <- lazy_chunks()
+      
+      single_chunk_windows <- get_single_chunk_windows(chunks,
+                                                       row_num_vect$row_num,
+                                                       brush_data$windows)
+      
+      stored_data$data <- update_stored_data(stored_data$data, single_chunk_windows)
+      
+      perc_skip = as.numeric(input$percent_skip)
+      perc_skip = ifelse(is.na(perc_skip), 5, perc_skip)
+      row_num_vect$row_num <- row_num_vect$row_num + round(perc_skip / 100 * nrow(chunks))
+      
+      if (row_num_vect$row_num > nrow(chunks)) {
+        row_num_vect$row_num <- 1
+      }
+      
+      if (!is.null(stored_data$data)) {
+        stored_data$data <- clear_saved_window_data(chunks,
+                                                    row_num_vect$row_num,
+                                                    stored_data$data)
+      }
+      
+      brush_data$windows <- empty_window_data
     })
 
     output$download_data <- downloadHandler(filename = "shiny_eyes_output.csv",
