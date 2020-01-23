@@ -50,7 +50,7 @@ You can also delete a single window with the "d" key. The window your cursor is 
 
 The `previous chunk` and `next chunk` buttons will move you to the next (or previous) unique chunk in your data. Any windows from the last chunk are finilalized and stored. *If you return to a previous chunk, any old stored windows will be cleared.* This is currently the only way of going back and clearing window data that has already been stored.
 
-There is also a `Skip Ahead` button which allows you to skip ahead any number of trials that you wish. By default, it will just ahead 5% of your data, but you can change this value with the `Percent to skip (0-100)` option.
+There is also a `Skip Ahead` button which allows you to skip ahead any number of trials that you wish. By default, it will jump ahead 5% of your data, but you can change this value with the `Percent to skip (0-100)` option.
 
 If you would like to view the gaze data in gif format, you can click the `Render Gaze Gif` function. This function uses the `gganimate` package which requires you to install the `gifski` and `png` packages (gganimate will not install them for you). I recommend clicking the `Hide Gaze Gif` button whenever you are not using this function as it will take a few seconds to render for each chunk, and therefore can be quite slow.
 
