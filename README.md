@@ -1,5 +1,7 @@
 # ShinyEyes
 
+You can use this application at [https://colinquirk.shinyapps.io/shinyeyes/](https://colinquirk.shinyapps.io/shinyeyes/).
+
 This is a shiny application for manually coding eyetracking data into catagories e.g. fixations, saccades, blinks, etc. Right now, you can name up to (any) three catagories as that's how many I need but if anyone out there has different needs let me know. The goal is to require very little in terms of requirements from the user. The goal is not to create an entire workflow, but is instead to provide a tool for people who know what they are doing. The input is simply a csv file that defines some necessary data and the output is a csv file with all of the windows that you've created.
 
 ![example.gif](example.gif)
