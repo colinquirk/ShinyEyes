@@ -1,6 +1,8 @@
 library(shiny)
 library(tidyverse)
 library(gganimate)
+library(gifski)
+library(png)
 
 source("keypress_handler.R")
 source("helpers.R")
